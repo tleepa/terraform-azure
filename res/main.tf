@@ -25,7 +25,7 @@ data "local_file" "ssh_pub_key" {
 
 module "lx_jb" {
   source   = "./modules/vm_linux"
-  for_each = { for k, v in local.jbs : k => v if v.os == "lx" }
+  for_each = local.jbs
 
   count_index = each.value.count_index
   size        = can(each.value.size) ? each.value.size : ""

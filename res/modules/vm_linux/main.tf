@@ -55,3 +55,10 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   tags = var.tags
 }
+
+data "azurerm_public_ip" "jb_ip" {
+  depends_on          = [azurerm_linux_virtual_machine.vm]
+  count               = var.public_ip == true ? 1 : 0
+  name                = "${var.prefix}-${var.tags["fnc"]}-${var.count_index}-pip"
+  resource_group_name = var.rg_name
+}
