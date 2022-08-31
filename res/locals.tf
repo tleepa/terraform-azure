@@ -1,6 +1,6 @@
 locals {
   jbs = {
-    "1" = { size = "Standard_B2s", fnc = "jb" }
+    "jb1" = { os = "lx", fnc = "jb", count_index = 1 }
   }
   vms = {
     "web1" = { os = "win", fnc = "web", count_index = 1 }

@@ -6,26 +6,34 @@ provider "azurerm" {
   }
 }
 
+data "terraform_remote_state" "lz" {
+  backend = "local"
+
+  config = {
+    path = "../lz/terraform.tfstate.d/${terraform.workspace}/terraform.tfstate"
+  }
+}
+
 resource "azurerm_resource_group" "vm_rg" {
   name     = "${var.prefix}-${terraform.workspace}-res"
-  location = var.region
+  location = data.terraform_remote_state.lz.outputs.res_location
 }
 
 data "local_file" "ssh_pub_key" {
   filename = "${var.ssh_key_path}/${terraform.workspace}.pub"
 }
 
-module "bastion" {
+module "lx_jb" {
   source   = "./modules/vm_linux"
-  for_each = local.jbs
+  for_each = { for k, v in local.jbs : k => v if v.os == "lx" }
 
-  count_index = each.key
+  count_index = each.value.count_index
   size        = can(each.value.size) ? each.value.size : ""
   rg_name     = azurerm_resource_group.vm_rg.name
   region      = azurerm_resource_group.vm_rg.location
   username    = terraform.workspace
   ssh_pub_key = data.local_file.ssh_pub_key.content
-  subnet_id   = data.azurerm_subnet.subnet_pub.id
+  subnet_id   = data.terraform_remote_state.lz.outputs.subnet_pub_id
   prefix      = var.prefix
   public_ip   = true
 
@@ -45,7 +53,7 @@ module "lx_vm" {
   region      = azurerm_resource_group.vm_rg.location
   username    = terraform.workspace
   ssh_pub_key = data.local_file.ssh_pub_key.content
-  subnet_id   = data.azurerm_subnet.subnet_prv.id
+  subnet_id   = data.terraform_remote_state.lz.outputs.subnet_prv_id
   prefix      = var.prefix
 
   tags = {
@@ -64,7 +72,7 @@ module "win_vm" {
   region      = azurerm_resource_group.vm_rg.location
   username    = terraform.workspace
   password    = var.win_pass
-  subnet_id   = data.azurerm_subnet.subnet_prv.id
+  subnet_id   = data.terraform_remote_state.lz.outputs.subnet_prv_id
   prefix      = var.prefix
 
   tags = {

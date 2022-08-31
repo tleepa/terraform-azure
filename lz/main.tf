@@ -40,18 +40,30 @@ resource "azurerm_virtual_network" "lz_vnet" {
   resource_group_name = azurerm_resource_group.lz_rg.name
   location            = azurerm_resource_group.lz_rg.location
   address_space       = [var.address_space]
+}
 
-  subnet {
-    name           = "subnet_pub"
-    address_prefix = var.subnet_pub
-    security_group = azurerm_network_security_group.nsg_pub.id
-  }
+resource "azurerm_subnet" "subnet_pub" {
+  name                 = "subnet_pub"
+  resource_group_name  = azurerm_resource_group.lz_rg.name
+  virtual_network_name = azurerm_virtual_network.lz_vnet.name
+  address_prefixes     = [var.subnet_pub]
+}
 
-  subnet {
-    name           = "subnet_prv"
-    address_prefix = var.subnet_prv
-    security_group = azurerm_network_security_group.nsg_prv.id
-  }
+resource "azurerm_subnet" "subnet_prv" {
+  name                 = "subnet_prv"
+  resource_group_name  = azurerm_resource_group.lz_rg.name
+  virtual_network_name = azurerm_virtual_network.lz_vnet.name
+  address_prefixes     = [var.subnet_prv]
+}
+
+resource "azurerm_subnet_network_security_group_association" "subnet_pub" {
+  subnet_id                 = azurerm_subnet.subnet_pub.id
+  network_security_group_id = azurerm_network_security_group.nsg_pub.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "subnet_prv" {
+  subnet_id                 = azurerm_subnet.subnet_prv.id
+  network_security_group_id = azurerm_network_security_group.nsg_prv.id
 }
 
 resource "azurerm_private_dns_zone" "prv_zone" {
